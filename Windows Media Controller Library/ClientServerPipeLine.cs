@@ -1,29 +1,62 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
-using Windows_Media_Controller_Library.Models.Data;
+using Windows_Media_Controller_Library.Models;
 
 namespace Windows_Media_Controller_Library
 {
     class ClientServerPipeline
     {
-		public static DataTransferObject Serialize(object anySerializableObject)
-		{
-			using (var memoryStream = new MemoryStream())
-			{
-				(new BinaryFormatter()).Serialize(memoryStream, anySerializableObject);
-				return new DataTransferObject { Data = memoryStream.ToArray() };
-			}
-		}
+        public static DataBufferModel BufferSerialize(object ObjectToSerialize)
+        {
+            string data = JsonConvert.SerializeObject(ObjectToSerialize);
+            byte[] byteArray = Encoding.Default.GetBytes(data);
+            DataBufferModel buffer = new DataBufferModel();
+            buffer.DataId = Guid.NewGuid();
+            int count = 0;
+            int bytesLeft = byteArray.Length;
+            int index = 0;
+            int increment = 2029;
+            while (bytesLeft > 0)
+            {
+                count++;
+                byte[] subArray = byteArray.SubArray(index, increment);
 
-		public static object Deserialize(DataTransferObject message)
-		{
-			using (var memoryStream = new MemoryStream(message.Data))
-				return (new BinaryFormatter()).Deserialize(memoryStream);
-		}
-	}
+                bytesLeft -= increment;
+                index += increment;
+
+                buffer.BufferedData.Add(count, subArray);              
+            }
+            buffer.SeriesLength = count;
+
+            return buffer;
+        }
+
+        public static T BufferDeserialize<T>(DataBufferModel bufferModel)
+        {
+
+            if (bufferModel.BufferedData.Count == bufferModel.SeriesLength)
+            {
+                byte[] fullBuffer = new byte[bufferModel.SeriesLength * 2029];
+
+                for (int i = 1; i <= bufferModel.SeriesLength; i++)
+                {
+                    fullBuffer = fullBuffer.Concat(bufferModel.BufferedData[i]).ToArray();
+                }
+
+                string data = Encoding.Default.GetString(fullBuffer);
+                return JsonConvert.DeserializeObject<T>(data);
+            }
+            else
+            {
+                return default;
+            }
+
+        }
+    }
 }

@@ -6,13 +6,9 @@ using System.Threading.Tasks;
 
 namespace Windows_Media_Controller_Library.Models.Data
 {
-	public class DataTransferObject
-	{
-		public byte[] Data { get; set; }
-
-		public DataTransferObject()
-		{
-			Data = new byte[2048];
-		}
-	}
+    public class TransferCommandObject
+    {
+        public string Command { get; set; }
+        public string Value { get; set; }
+    }
 }

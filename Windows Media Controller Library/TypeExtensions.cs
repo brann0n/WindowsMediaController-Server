@@ -25,5 +25,20 @@ namespace Windows_Media_Controller_Library
 			}
 			return false;
 		}
+
+		public static T[] SubArray<T>(this T[] data, int index, int length)
+		{
+			T[] result = new T[length];
+			if(length > data.Length - index)
+			{
+				Array.Copy(data, index, result, 0, data.Length - index);
+			}
+			else
+			{
+				Array.Copy(data, index, result, 0, length);
+			}
+			
+			return result;
+		}
 	}
 }

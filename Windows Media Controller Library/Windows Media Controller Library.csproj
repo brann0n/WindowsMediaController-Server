@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,17 +47,15 @@
     <Compile Include="AutoDiscovery.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="ClientServerPipeLine.cs" />
-    <Compile Include="Models\ClientAuthenticateObject.cs" />
-    <Compile Include="Models\ClientUser32Actions.cs" />
-    <Compile Include="Models\Data\DataRespondModel.cs" />
-    <Compile Include="Models\Data\DataSendModel.cs" />
-    <Compile Include="Models\Data\DataTransferObject.cs" />
-    <Compile Include="Modules\IDataInterface.cs" />
-    <Compile Include="Modules\IExecuteInterface.cs" />
-    <Compile Include="Modules\IResponseInterface.cs" />
+    <Compile Include="Models\DataBufferModel.cs" />
+    <Compile Include="Models\Data\TransferCommandObject.cs" />
+    <Compile Include="Modules\MusicCommandHandler.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TypeExtensions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

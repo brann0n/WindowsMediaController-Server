@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Windows_Media_Controller_Library.Models.Data;
 
 namespace Windows_Media_Controller_Library
 {
@@ -14,7 +13,6 @@ namespace Windows_Media_Controller_Library
 		private uint id;
 		private string receivedData;
 		private DateTime connectedAt;
-		public List<DataRespondModel> RespondModels;
 		private string Name;
 
 
@@ -23,7 +21,6 @@ namespace Windows_Media_Controller_Library
 			this.id = id;
 			this.connectedAt = DateTime.Now;
 			this.endPoint = pAddressEndpoint;
-			RespondModels = new List<DataRespondModel>();
 			SetName($"Client #{id}");
 		}
 

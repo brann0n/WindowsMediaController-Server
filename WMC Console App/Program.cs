@@ -6,12 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows_Media_Controller_Library;
 using Windows_Media_Controller_Library.Models.Data;
+using Windows_Media_Controller_Library.Modules;
 
 namespace WMC_Console_App
 {
     class Program
     {
         public static Server Server;
+		public static MusicCommandHandler handler;
 
         static void Main(string[] args)
         {
@@ -28,6 +30,7 @@ namespace WMC_Console_App
 			Program.Server.ConnectionBlocked += Server_ConnectionBlocked;
 			Program.Server.MessageReceived += Server_MessageReceived;
 			Program.Server.Start();
+			Program.handler = new MusicCommandHandler();
 
 			WriteLine("Server started");
 
@@ -36,9 +39,13 @@ namespace WMC_Console_App
 		}
 
 
-		private static void Server_MessageReceived(Client c, DataRespondModel model)
+		private static void Server_MessageReceived(Client c, TransferCommandObject model)
 		{
-			WriteLine($"Client #{c.GetClientID()} received data: {model.ResponseType}{{{model.ResponseObject}}}");
+			WriteLine($"Client #{c.GetClientID()} received data: {model.Command}{{{model.Value}}}");
+			if (handler.Invoke(c, model))
+				WriteLine("Execute Success");
+			else
+				WriteLine("Execute Failed");
 		}
 
 		private static void Server_ConnectionBlocked(IPEndPoint endPoint)
