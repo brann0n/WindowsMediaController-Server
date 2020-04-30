@@ -235,7 +235,7 @@ namespace Windows_Media_Controller_Library
                 {
                     int length = data[1];
                     int series = data[2];
-                    Guid guid = new Guid(data.SubArray(3, 19));
+                    Guid guid = new Guid(data.SubArray(3, 19)).ToLittleEndian();
                     if (length > 1)
                     {
                         //find the buffer
@@ -345,7 +345,7 @@ namespace Windows_Media_Controller_Library
             foreach (KeyValuePair<int, byte[]> item in message.BufferedData)
             {
                 byte[] sendArray = new byte[] { 0x1B, (byte)message.SeriesLength, (byte)item.Key };
-                sendArray = sendArray.Concat(message.DataId.ToByteArray()).Concat(item.Value).ToArray();
+                sendArray = sendArray.Concat(message.DataId.ToBigEndian().ToByteArray()).Concat(item.Value).ToArray();
                 SendBytesToSocket(s, sendArray);
             }
         }

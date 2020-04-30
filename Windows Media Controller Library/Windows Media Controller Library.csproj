@@ -47,6 +47,7 @@
     <Compile Include="AutoDiscovery.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="ClientServerPipeLine.cs" />
+    <Compile Include="GuidExtensions.cs" />
     <Compile Include="Models\DataBufferModel.cs" />
     <Compile Include="Models\Data\TransferCommandObject.cs" />
     <Compile Include="Modules\MusicCommandHandler.cs" />

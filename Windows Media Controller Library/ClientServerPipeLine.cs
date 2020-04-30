@@ -7,14 +7,15 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using Windows_Media_Controller_Library.Models;
+using Windows_Media_Controller_Library.Models.Data;
 
 namespace Windows_Media_Controller_Library
 {
     class ClientServerPipeline
     {
-        public static DataBufferModel BufferSerialize(object ObjectToSerialize)
+        public static DataBufferModel BufferSerialize(TransferCommandObject ObjectToSerialize) //changed serialization into pattern seperated text: <SPLITPATTERN>
         {
-            string data = JsonConvert.SerializeObject(ObjectToSerialize);
+            string data = $"{ObjectToSerialize.Command}<SPLITPATTERN>{ObjectToSerialize.Value}";
             byte[] byteArray = Encoding.Default.GetBytes(data);
             DataBufferModel buffer = new DataBufferModel();
             buffer.DataId = Guid.NewGuid();
