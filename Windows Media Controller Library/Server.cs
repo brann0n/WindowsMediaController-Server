@@ -10,15 +10,22 @@ using Windows_Media_Controller_Library.Models.Data;
 
 namespace Windows_Media_Controller_Library
 {
+    public enum DataEventType
+    {
+        DATA,
+        RESPONSE,
+        COMMAND
+    }
     public class Server
     {
         private IPAddress ip;
         private int dataSize;
-        private byte[] data;
         private Socket serverSocket;
         private bool acceptIncomingConnections;
         private uint clientCount = 0;
         private List<DataBufferModel> Buffers;
+
+        
 
         /// <summary>
         /// Contains all connected clients indexed
@@ -29,7 +36,7 @@ namespace Windows_Media_Controller_Library
         //delegates
         public delegate void ConnectionEventHandler(Client c);
         public delegate void ConnectionBlockedEventHandler(IPEndPoint endPoint);
-        public delegate void ClientMessageReceivedHandler(Client c, TransferCommandObject model);
+        public delegate void ClientMessageReceivedHandler(Client c, TransferCommandObject model, DataEventType type);
 
         /// <summary>
         /// Occurs when a client is connected.
@@ -48,15 +55,15 @@ namespace Windows_Media_Controller_Library
 
         public event ClientMessageReceivedHandler MessageReceived;
 
-        public Server(IPAddress ip, int dataSize = 1024)
+        public Server(IPAddress ip)
         {
             this.ip = ip;
-            this.dataSize = dataSize;
-            this.data = new byte[dataSize];
-            this.clients = new Dictionary<Socket, Client>();
-            this.acceptIncomingConnections = true;
-            this.serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            this.Buffers = new List<DataBufferModel>();
+            dataSize = 2048;
+            //data = new byte[dataSize];
+            clients = new Dictionary<Socket, Client>();
+            acceptIncomingConnections = true;
+            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            Buffers = new List<DataBufferModel>();
         }
 
         /// <summary>
@@ -231,68 +238,55 @@ namespace Windows_Media_Controller_Library
                     CloseSocket(clientSocket);
                     serverSocket.BeginAccept(new AsyncCallback(HandleIncomingConnection), serverSocket);
                 }
-                else if (data[0] == 0x1A || data[0] == 0x1B || data[0] == 0x1C) //less than the max byte check
+                else if (client.Data[0] == 0x1A || client.Data[0] == 0x1B || client.Data[0] == 0x1C) //less than the max byte check
                 {
-                    int length = data[1];
-                    int series = data[2];
-                    Guid guid = new Guid(data.SubArray(3, 19)).ToLittleEndian();
-                    if (length > 1)
+                    int length = client.Data[1];
+                    int series = client.Data[2];
+                    Guid guid = new Guid(client.Data.SubArray(3, 16)).ToLittleEndian();
+
+                    DataBufferModel buffer = Buffers.FirstOrDefault(n => n.DataId == guid);
+                    if (buffer != null)
                     {
-                        //find the buffer
-                        DataBufferModel buffer = Buffers.FirstOrDefault(n => n.DataId == guid);
-                        if (buffer != null)
-                        {
-                            buffer.BufferedData.Add(series, data.SubArray(20, 2028));
-                            buffer.LatestSeries = series;
-                        }
-                        else
-                        {
-                            //create a new buffer
-                            buffer = new DataBufferModel();
-                            buffer.BufferedData.Add(series, data.SubArray(20, 2028));
-                            buffer.DataId = guid;
-                            buffer.SeriesLength = length;
-                            buffer.LatestSeries = series;
-                            Buffers.Add(buffer);
-                        }
-                        if (buffer.BufferedData.Count == buffer.SeriesLength)
-                        {
-                            //process data
-                            if (HandleIncomingData(ClientServerPipeline.BufferDeserialize<TransferCommandObject>(buffer), client))
-                            {
-                                //data processed success, remove this request from the request buffer
-                            }
-                            else
-                            {
-                                //something went wrong, report this to the user
-                                
-                            }
-                        }
+                        buffer.BufferedData.Add(series, client.Data.SubArray(19, 2028));
+                        buffer.LatestSeries = series;
                     }
                     else
                     {
-
-
-                        //just one pack of data :)
+                        //create a new buffer
+                        buffer = new DataBufferModel();
+                        buffer.BufferedData.Add(series, client.Data.SubArray(19, 2028));
+                        buffer.DataId = guid;
+                        buffer.SeriesLength = length;
+                        buffer.LatestSeries = series;
+                        Buffers.Add(buffer);
                     }
-
-                    switch (data[0])
+                    Console.WriteLine($"Received data with id: {guid.ToString()}");
+                    if (buffer.BufferedData.Count == buffer.SeriesLength)
                     {
-                        case 0xAA:
-
-                            break;
-                        case 0xBB:
-                            break;
-                        case 0xCC:
-                            break;
+                        bool handled = false;
+                        switch (client.Data[0])
+                        {
+                            case 0x1A:
+                                handled = HandleIncomingData(ClientServerPipeline.BufferDeserialize(buffer), client, DataEventType.RESPONSE);
+                                break;
+                            case 0x1B:
+                                handled = HandleIncomingData(ClientServerPipeline.BufferDeserialize(buffer), client, DataEventType.COMMAND);
+                                break;
+                            case 0x1C:
+                                handled = HandleIncomingData(ClientServerPipeline.BufferDeserialize(buffer), client, DataEventType.DATA);
+                                break;
+                        }
+                        if (handled)
+                        {
+                            //remove the id from the buffer, else report it and set it up for future handling
+                            //TODO: this^
+                        }
                     }
-                    //HandleIncomingData(ClientServerPipeline.Deserialize(_data), client);
-                    clientSocket.BeginReceive(data, 0, dataSize, SocketFlags.None, new AsyncCallback(ReceiveData), clientSocket);
                 }
-                else
-                    clientSocket.BeginReceive(data, 0, dataSize, SocketFlags.None, new AsyncCallback(ReceiveData), clientSocket);
+                client.Data = new byte[2048];
+                clientSocket.BeginReceive(client.Data, 0, dataSize, SocketFlags.None, new AsyncCallback(ReceiveData), clientSocket);
             }
-            catch (SocketException)
+            catch (SocketException e)
             {
                 Socket clientSocket = (Socket)result.AsyncState;
                 Client client = GetClientBySocket(clientSocket);
@@ -304,14 +298,14 @@ namespace Windows_Media_Controller_Library
             }
         }
 
-        private bool HandleIncomingData(object dObj, Client client)
+        private bool HandleIncomingData(TransferCommandObject dObj, Client client, DataEventType type)
         {
             if (dObj.GetType().isType(typeof(TransferCommandObject)))
             {
                 TransferCommandObject obj = (TransferCommandObject)dObj;
                 //send the transfer object to the command handler
                 //client.RespondModels.Add(obj);
-                MessageReceived?.Invoke(client, obj);
+                MessageReceived?.Invoke(client, obj, type);
                 return true;
             }
             else
@@ -368,10 +362,10 @@ namespace Windows_Media_Controller_Library
             try
             {
                 Socket clientSocket = (Socket)result.AsyncState;
-
+                Client client = GetClientBySocket(clientSocket);
                 clientSocket.EndSend(result);
 
-                clientSocket.BeginReceive(data, 0, dataSize, SocketFlags.None, new AsyncCallback(ReceiveData), clientSocket);
+                clientSocket.BeginReceive(client.Data, 0, dataSize, SocketFlags.None, new AsyncCallback(ReceiveData), clientSocket);
             }
 
             catch (Exception e)

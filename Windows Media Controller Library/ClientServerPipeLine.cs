@@ -11,7 +11,7 @@ using Windows_Media_Controller_Library.Models.Data;
 
 namespace Windows_Media_Controller_Library
 {
-    class ClientServerPipeline
+    public class ClientServerPipeline
     {
         public static DataBufferModel BufferSerialize(TransferCommandObject ObjectToSerialize) //changed serialization into pattern seperated text: <SPLITPATTERN>
         {
@@ -38,20 +38,23 @@ namespace Windows_Media_Controller_Library
             return buffer;
         }
 
-        public static T BufferDeserialize<T>(DataBufferModel bufferModel)
+        public static TransferCommandObject BufferDeserialize(DataBufferModel bufferModel)
         {
 
             if (bufferModel.BufferedData.Count == bufferModel.SeriesLength)
             {
-                byte[] fullBuffer = new byte[bufferModel.SeriesLength * 2029];
+                byte[] fullBuffer = bufferModel.BufferedData[1];
 
-                for (int i = 1; i <= bufferModel.SeriesLength; i++)
+                if(bufferModel.SeriesLength > 1)
                 {
-                    fullBuffer = fullBuffer.Concat(bufferModel.BufferedData[i]).ToArray();
+                    for (int i = 2; i <= bufferModel.SeriesLength; i++)
+                    {
+                        fullBuffer = fullBuffer.Concat(bufferModel.BufferedData[i]).ToArray();
+                    }
                 }
 
-                string data = Encoding.Default.GetString(fullBuffer);
-                return JsonConvert.DeserializeObject<T>(data);
+                string data = Encoding.Default.GetString(fullBuffer.Where(n=> n != 0).ToArray()).Replace("\0", "");
+                return JsonConvert.DeserializeObject<TransferCommandObject>(data);
             }
             else
             {

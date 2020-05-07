@@ -14,7 +14,7 @@ namespace Windows_Media_Controller_Library
 		private string receivedData;
 		private DateTime connectedAt;
 		private string Name;
-
+		public byte[] Data;
 
 		public Client(uint id, IPEndPoint pAddressEndpoint)
 		{
@@ -22,6 +22,7 @@ namespace Windows_Media_Controller_Library
 			this.connectedAt = DateTime.Now;
 			this.endPoint = pAddressEndpoint;
 			SetName($"Client #{id}");
+			this.Data = new byte[2048];
 		}
 
 		public string GetName()

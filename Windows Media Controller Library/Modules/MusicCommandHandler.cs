@@ -11,26 +11,33 @@ namespace Windows_Media_Controller_Library.Modules
 {
     public class MusicCommandHandler
     {
-		private const int APPCOMMAND_VOLUME_MUTE = 0x80000;
-		private const int APPCOMMAND_VOLUME_UP = 0xA0000;
-		private const int APPCOMMAND_VOLUME_DOWN = 0x90000;
 		private const int WM_APPCOMMAND = 0x319;
 		private const int SC_MONITORPOWER = 0xF170;
 		private const int WM_SYSCOMMAND = 0x0112;
 
-		public bool Invoke(Client c, TransferCommandObject obj)
+		private AudioMixerHelper audio;
+		public MusicCommandHandler()
+		{
+			audio = new AudioMixerHelper();
+		}
+
+		public bool InvokeCommand(Client c, TransferCommandObject obj)
         {
             switch (obj.Command)
             {
                 case "VolumeUp":
-					VolumeUp(1);
+					//audio.SetVolumePercentage(audio.GetVolumePercentage() + 1);
+					new ModernAudioChanger().run();
 					return true;
                 case "VolumeDown":
-					VolumeDown(1);
+					//audio.SetVolumePercentage(audio.GetVolumePercentage() - 1);
 					return true;
-				case "Pause":
+				case "VolumeMute":
+					audio.VolumeMute();
                     break;
-                case "Stop":
+				case "Pause":
+					break;
+				case "Stop":
                     break;
                 case "SkipNext":
                     break;
@@ -47,28 +54,7 @@ namespace Windows_Media_Controller_Library.Modules
 
 
 		[DllImport("user32.dll")]
-		public static extern IntPtr SendMessageW(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
-
-		public void VolumeUp(int amount)
-		{
-			for (int i = 0; i < amount; i++)
-			{
-				SendMessageW(GetHandle(), WM_APPCOMMAND, GetHandle(), (IntPtr)APPCOMMAND_VOLUME_UP);
-			}
-		}
-
-		public void VolumeDown(int amount)
-		{
-			for (int i = 0; i < amount; i++)
-			{
-				SendMessageW(GetHandle(), WM_APPCOMMAND, GetHandle(), (IntPtr)APPCOMMAND_VOLUME_DOWN);
-			}
-		}
-
-		public void VolumeMute()
-		{
-			SendMessageW(GetHandle(), WM_APPCOMMAND, GetHandle(), (IntPtr)APPCOMMAND_VOLUME_MUTE);
-		}
+		public static extern IntPtr SendMessageW(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);	
 
 		public void MonitorSleep()
 		{

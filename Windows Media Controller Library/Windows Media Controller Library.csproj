@@ -50,6 +50,8 @@
     <Compile Include="GuidExtensions.cs" />
     <Compile Include="Models\DataBufferModel.cs" />
     <Compile Include="Models\Data\TransferCommandObject.cs" />
+    <Compile Include="Modules\AudioMixerHelper.cs" />
+    <Compile Include="Modules\ModernAudioChanger.cs" />
     <Compile Include="Modules\MusicCommandHandler.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
