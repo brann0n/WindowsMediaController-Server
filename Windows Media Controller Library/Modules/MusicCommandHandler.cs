@@ -11,16 +11,15 @@ namespace Windows_Media_Controller_Library.Modules
 {
     public class MusicCommandHandler
     {
-		private const int WM_APPCOMMAND = 0x319;
 		private const int SC_MONITORPOWER = 0xF170;
 		private const int WM_SYSCOMMAND = 0x0112;
 
-		private VolumeController audio;
-		private MusicController music;
+		private readonly VolumeController Audio;
+		private readonly MusicController Music;
 		public MusicCommandHandler()
 		{
-			audio = new VolumeController();
-			music = new MusicController();
+			Audio = new VolumeController();
+			Music = new MusicController();
 		}
 
 		public bool InvokeCommand(Client c, TransferCommandObject obj)
@@ -28,25 +27,25 @@ namespace Windows_Media_Controller_Library.Modules
             switch (obj.Command)
             {
                 case "VolumeUp":
-					audio.VolumeUp(2);
+					Audio.VolumeUp(int.Parse(obj.Value));
 					return true;
                 case "VolumeDown":
-					audio.VolumeDown(2);
+					Audio.VolumeDown(int.Parse(obj.Value));
 					return true;
 				case "VolumeMute":
-					audio.VolumeMute();
-                    break;
+					Audio.VolumeMute();
+					return true;
 				case "Pause":
-					music.PlayPause();
-					break;
+					Music.PlayPause();
+					return true;
 				case "Stop":
                     break;
                 case "SkipNext":
-					music.Next();
-                    break;
-                case "SkipPrev":
-					music.Prev();
-                    break;
+					Music.Next();
+					return true;
+				case "SkipPrev":
+					Music.Prev();
+					return true;
 				case "ScreenBlack":
 					MonitorSleep();
 					return true;
@@ -54,7 +53,6 @@ namespace Windows_Media_Controller_Library.Modules
 
 			return false;
         }
-
 
 
 		[DllImport("user32.dll")]

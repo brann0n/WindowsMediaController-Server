@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Windows_Media_Controller_Library.Modules
@@ -29,6 +31,22 @@ namespace Windows_Media_Controller_Library.Modules
         public void Prev()
         {
             keybd_event(VK_MEDIA_PREV_TRACK, 0, KEYEVENTF_EXTENTEDKEY, IntPtr.Zero);
+        }
+
+        public static string GetTrackInfo(string processName)
+        {
+            var proc = Process.GetProcessesByName(processName).FirstOrDefault(p => !string.IsNullOrWhiteSpace(p.MainWindowTitle));
+
+            if (proc == null)
+            {
+                return null;
+            }
+
+            if (string.Equals(proc.MainWindowTitle, processName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return "Paused";
+            }
+            return proc.MainWindowTitle;
         }
     }
 }

@@ -25,16 +25,31 @@ namespace Windows_Media_Controller_Library
 				string clientRequest = Encoding.ASCII.GetString(clientRequestData);
 				if (clientRequest == RemotePassword)
 				{
-					Console.WriteLine($"Received {clientRequest} from {clientEp.Address}, sending response: { responseData} ");
+					WriteLine($"Received {clientRequest} from {clientEp.Address}, sending response: { responseData} ", ConsoleColor.DarkBlue);
 
 					server.Send(responseData, responseData.Length, clientEp);
 					server.Close();
 				}
 				else
 				{
-					Console.WriteLine($"Received {clientRequest} from {clientEp.Address}, ignoring!");
+					WriteLine($"Received {clientRequest} from {clientEp.Address}, ignoring!", ConsoleColor.DarkBlue);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Overload of the writeline function that displays current time in front of the text to write
+		/// </summary>
+		/// <param name="line"></param>
+		/// <param name="color"></param>
+		public static void WriteLine(string line, ConsoleColor color = ConsoleColor.White)
+		{
+			string timeFormat = $"[{DateTime.Now.ToString("HH:MM:ss")}] ";
+			Console.ForegroundColor = ConsoleColor.Green;
+			Console.Write(timeFormat);
+			Console.ForegroundColor = color;
+			Console.WriteLine(line);
+			Console.ResetColor();
 		}
 	}
 }

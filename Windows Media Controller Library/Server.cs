@@ -37,6 +37,7 @@ namespace Windows_Media_Controller_Library
         public delegate void ConnectionEventHandler(Client c);
         public delegate void ConnectionBlockedEventHandler(IPEndPoint endPoint);
         public delegate void ClientMessageReceivedHandler(Client c, TransferCommandObject model, DataEventType type);
+        public delegate void ClientWriteLine(string line, ConsoleColor color);
 
         /// <summary>
         /// Occurs when a client is connected.
@@ -53,7 +54,12 @@ namespace Windows_Media_Controller_Library
         /// </summary>
         public event ConnectionBlockedEventHandler ConnectionBlocked;
 
+        /// <summary>
+        /// Occurs when a message has been received
+        /// </summary>
         public event ClientMessageReceivedHandler MessageReceived;
+
+        public event ClientWriteLine WriteLine;
 
         public Server(IPAddress ip)
         {
@@ -108,7 +114,7 @@ namespace Windows_Media_Controller_Library
                     TransferCommandObject m = new TransferCommandObject();
                     m.Command = "Login";
                     m.Value = "x_891$UI.()";
-                    SendDataObjectToSocket(newSocket, ClientServerPipeline.BufferSerialize(m));
+                    SendDataObjectToSocket(0x1B, newSocket, ClientServerPipeline.BufferSerialize(m));
 
                     serverSocket.BeginAccept(new AsyncCallback(HandleIncomingConnection), serverSocket);
                 }
@@ -120,7 +126,7 @@ namespace Windows_Media_Controller_Library
 
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                WriteLine(e.Message, ConsoleColor.Red);
             }
         }
 
@@ -260,7 +266,7 @@ namespace Windows_Media_Controller_Library
                         buffer.LatestSeries = series;
                         Buffers.Add(buffer);
                     }
-                    Console.WriteLine($"Received data with id: {guid.ToString()}");
+                    WriteLine($"Received data with id: {guid.ToString()}", ConsoleColor.Magenta);
                     if (buffer.BufferedData.Count == buffer.SeriesLength)
                     {
                         bool handled = false;
@@ -294,7 +300,7 @@ namespace Windows_Media_Controller_Library
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error occured: {e.Message}");
+                WriteLine($"Error occured: {e.Message}", ConsoleColor.Red);
             }
         }
 
@@ -310,7 +316,7 @@ namespace Windows_Media_Controller_Library
             }
             else
             {
-                Console.WriteLine("Object type not supported");
+                WriteLine("Object type not supported", ConsoleColor.Red);
                 return false;
             }
         }
@@ -333,12 +339,12 @@ namespace Windows_Media_Controller_Library
         /// </summary>
         /// <param name="s">The socket.</param>
         /// <param name="message">The message.</param>
-        public void SendDataObjectToSocket(Socket s, DataBufferModel message)
+        public void SendDataObjectToSocket(byte type, Socket s, DataBufferModel message)
         {
-            Console.WriteLine("Sending data with id: " + message.DataId.ToString());
+            WriteLine("Sending data with id: " + message.DataId.ToString(), ConsoleColor.Magenta);
             foreach (KeyValuePair<int, byte[]> item in message.BufferedData)
             {
-                byte[] sendArray = new byte[] { 0x1B, (byte)message.SeriesLength, (byte)item.Key };
+                byte[] sendArray = new byte[] { type, (byte)message.SeriesLength, (byte)item.Key };
                 sendArray = sendArray.Concat(message.DataId.ToBigEndian().ToByteArray()).Concat(item.Value).ToArray();
                 SendBytesToSocket(s, sendArray);
             }
@@ -370,18 +376,18 @@ namespace Windows_Media_Controller_Library
 
             catch (Exception e)
             {
-                Console.WriteLine("Error occured: " + e.Message.Substring(0, 20));
+                WriteLine("Error occured: " + e.Message.Substring(0, 20), ConsoleColor.Red);
             }
         }
 
 
-        public void SendDataObjectToAll(DataBufferModel message)
+        public void SendDataObjectToAll(byte type, DataBufferModel message)
         {
             foreach (Socket s in clients.Keys)
             {
                 try
                 {
-                    SendDataObjectToSocket(s, message);
+                    SendDataObjectToSocket(type, s, message);
                 }
                 catch { }
             }
