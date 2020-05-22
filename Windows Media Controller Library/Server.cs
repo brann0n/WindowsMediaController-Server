@@ -219,7 +219,7 @@ namespace Windows_Media_Controller_Library
 
                 int bytesReceived = clientSocket.EndReceive(result);
 
-                //guidelines for the received data:
+                // guidelines for the received data:
                 // first byte is check:
                 //											0x1A: Response
                 //											0x1B: Command

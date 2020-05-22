@@ -15,10 +15,12 @@ namespace Windows_Media_Controller_Library.Modules
 		private const int SC_MONITORPOWER = 0xF170;
 		private const int WM_SYSCOMMAND = 0x0112;
 
-		private AudioMixerHelper audio;
+		private VolumeController audio;
+		private MusicController music;
 		public MusicCommandHandler()
 		{
-			audio = new AudioMixerHelper();
+			audio = new VolumeController();
+			music = new MusicController();
 		}
 
 		public bool InvokeCommand(Client c, TransferCommandObject obj)
@@ -26,22 +28,24 @@ namespace Windows_Media_Controller_Library.Modules
             switch (obj.Command)
             {
                 case "VolumeUp":
-					//audio.SetVolumePercentage(audio.GetVolumePercentage() + 1);
-					new ModernAudioChanger().run();
+					audio.VolumeUp(2);
 					return true;
                 case "VolumeDown":
-					//audio.SetVolumePercentage(audio.GetVolumePercentage() - 1);
+					audio.VolumeDown(2);
 					return true;
 				case "VolumeMute":
 					audio.VolumeMute();
                     break;
 				case "Pause":
+					music.PlayPause();
 					break;
 				case "Stop":
                     break;
                 case "SkipNext":
+					music.Next();
                     break;
                 case "SkipPrev":
+					music.Prev();
                     break;
 				case "ScreenBlack":
 					MonitorSleep();

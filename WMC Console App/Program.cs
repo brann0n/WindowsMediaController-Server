@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace WMC_Console_App
         static void Main(string[] args)
         {
 			InitServer();
+
 			Console.ReadLine();
         }
 
